@@ -1,0 +1,18 @@
+version: "2"
+
+secrets:
+  API_KEY:
+    external: true
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+     - "8505:8501"
+    environment:
+      - 'API_KEY=/run/secrets/API_KEY'
+    secrets:
+      - API_KEY
+    volumes:
+      - "./frontend:/app:rw"
+    restart: always
