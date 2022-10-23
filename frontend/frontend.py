@@ -1,7 +1,7 @@
 import streamlit as st
 import altair as alt
 import os
-from utils import get_or_load, get_stocks, get_ticker_symbols, get_performance, historical
+
 
 st.set_page_config(page_title="Stock Dashboard", layout="wide")
 page = st.sidebar.selectbox("Main Categorie", ["AAPL stock",
@@ -9,23 +9,7 @@ page = st.sidebar.selectbox("Main Categorie", ["AAPL stock",
                                                'One stock',
                                                'Many stocks',
                                                "Compare stocks"])
-
-
-if page == "AAPL stock":
-    st.header("AAPL stock prices")
-    df = get_or_load('AAPL', os.environ['API_KEY'])
-    df_line = df[['timestamp', 'open']]
-    df_line = df_line.set_index('timestamp')
-    st.line_chart(df_line)
-
-if page == "History":
-    st.header("Show historical stock performance")
-    ticker = 'AAPL'
-    df = historical(ticker, os.environ['API_KEY'])
-    #st.table(df)
-    df_line = df[['timestamp', 'close']]
-    df_line = df_line.set_index('timestamp')
-    chart = (
+chart = (
         alt.Chart()
         .mark_line(point=True)
         .encode(
@@ -38,25 +22,31 @@ if page == "History":
             size=alt.SizeValue(4),
         )
     )
+from ipynb.fs.defs.workshop import get_stock_API, transform_api_output, get_stock_timeline, get_ticker_symbols, get_stocks, get_performance
+def get_stock_prices(stock: str, apikey: str):
+    api_result = get_stock_API(stock, apikey)
+    output = transform_api_output(api_result)
+    output['ticker'] = stock
+    output['close'] = output['close'].astype(float)
+    return output
+
+if page == "AAPL stock":
+    st.header("AAPL stock prices")
+    df = get_stock_prices('AAPL', os.environ['API_KEY'])
+    df_line = df[['timestamp', 'open']]
+    df_line = df_line.set_index('timestamp')
+    st.altair_chart(alt.layer(chart, data=df), use_container_width=True)
+
+if page == "History":
+    st.header("Show historical stock performance")
+    ticker = 'AAPL'
+    df = get_stock_timeline(ticker, os.environ['API_KEY'])
     st.altair_chart(alt.layer(chart, data=df), use_container_width=True)
 
 if page == "One stock":
     st.header("Show stock performance")
     ticker = st.text_input("Ticker of stock:", value='IBM')
-    df = historical(ticker, os.environ['API_KEY'])
-    chart = (
-        alt.Chart()
-        .mark_line(point=True)
-        .encode(
-            x=alt.X("timestamp:O", timeUnit="yearmonthdate", title="date"),
-            y="close:Q",
-            color=alt.Color(
-                "ticker",
-                legend=alt.Legend(title="Stock"),
-            ),
-            size=alt.SizeValue(4),
-        )
-    )
+    df = get_stock_timeline(ticker, os.environ['API_KEY'])
     st.altair_chart(alt.layer(chart, data=df), use_container_width=True)
 
 if page == "Many stocks":
@@ -64,19 +54,6 @@ if page == "Many stocks":
     stocks = st.multiselect('Select stocks', options=get_ticker_symbols())
     if len(stocks) > 0:
         df = get_stocks(stocks, os.environ['API_KEY'])
-        chart = (
-            alt.Chart()
-            .mark_line(point=True)
-            .encode(
-                x=alt.X("timestamp:O", timeUnit="yearmonthdate", title="date"),
-                y="close:Q",
-                color=alt.Color(
-                    "ticker",
-                    legend=alt.Legend(title="Stock"),
-                ),
-                size=alt.SizeValue(4),
-            )
-        )
         st.altair_chart(alt.layer(chart, data=df), use_container_width=True)
 
 if page == "Compare stocks":
@@ -96,7 +73,7 @@ if page == "Compare stocks":
             "{:,.2f}%".format(df1.tail(1).performance.to_list()[0]*100)
         )
         st.metric(
-            f"Standard Diviation:",
+            f"Standard Deviation:",
             "{:,.2f}".format(
                 df1.performance.std()*100
             )
@@ -113,7 +90,7 @@ if page == "Compare stocks":
             "{:,.2f}%".format(df2.tail(1).performance.to_list()[0]*100)
         )
         st.metric(
-            f"Standard Diviation:",
+            f"Standard Deviation:",
             "{:,.2f}".format(
                 df2.performance.std()*100
             )
@@ -130,7 +107,7 @@ if page == "Compare stocks":
             "{:,.2f}%".format(df3.tail(1).performance.to_list()[0]*100)
         )
         st.metric(
-            f"Standard Diviation:",
+            f"Standard Deviation:",
             "{:,.2f}".format(
                 df3.performance.std()*100
             )
@@ -147,7 +124,7 @@ if page == "Compare stocks":
             "{:,.2f}%".format(df4.tail(1).performance.to_list()[0]*100)
         )
         st.metric(
-            f"Standard Diviation:",
+            f"Standard Deviation:",
             "{:,.2f}".format(
                 df4.performance.std()*100
             )

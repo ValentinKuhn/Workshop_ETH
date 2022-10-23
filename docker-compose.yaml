@@ -16,3 +16,13 @@ services:
     volumes:
       - "./frontend:/app:rw"
     restart: always
+  notebook:
+    image: jupyter/minimal-notebook
+    ports:
+     - "8888:8888"
+    environment:
+      - 'API_KEY=/run/secrets/API_KEY'
+    secrets:
+      - API_KEY
+    volumes:
+      - "./frontend:/home/jovyan/work:rw"

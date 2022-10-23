@@ -24,8 +24,6 @@ def get_stock_API(stock: str, apikey: str):
     return response.text
 
 
-
-
 ### ONLY IF NECESSARY COPY SOLUTION FROM HERE #####
 
 
@@ -33,25 +31,16 @@ def transform_api_output(api_result: str):
     text = [sub.split(",") for sub in api_result.split("\r\n")]
     header = text[0]
     body = text[1:]
-    output = pd.DataFrame(body, columns=header).dropna()
+    output = pd.DataFrame(data=body, columns=header).dropna()
     return output
 
+def get_stock_prices(stock: str, apikey: str):
+    api_result = get_stock_API(stock, apikey)
+    output = transform_api_output(api_result)
+    output['ticker'] = stock
+    output['close'] = output['close'].astype(float)
+    return output
 
-def get_or_load(stock: str, apikey: str):
-    data_dir = 'data/'
-    data_files = os.listdir(data_dir)
-    # Check if data folder is filled
-    if len(data_files) > 0:
-        data_buffered = pd.concat(
-            [pd.read_csv(f'{data_dir}{file}', index_col=[0])
-             for file in data_files])
-        # Check if stock is available
-        if stock in data_buffered.ticker.to_list():
-            return data_buffered[data_buffered.ticker == stock]
-    file = f'{data_dir}{stock}.csv'
-    data = get_stock_prices(stock, apikey)
-    data.to_csv(file)
-    return data
 
 def transform_hist_data(df: pd.DataFrame):
     output = df
@@ -60,16 +49,17 @@ def transform_hist_data(df: pd.DataFrame):
     return output
 
 
-def historical(stock: str, apikey: str):
+def get_stock_timeline(stock: str, apikey: str):
     output = pd.DataFrame()
     hist_data_raw = get_or_load(stock, apikey, historical=True)
     hist_data = transform_hist_data(hist_data_raw)
     current_data = get_or_load(stock, apikey)
-    output = pd.concat([current_data,hist_data])
+    output = pd.concat([current_data, hist_data])
     return output
 
+
 def get_stocks(stocks: List[str], apikey: str):
-    output = [historical(stock, apikey) for stock in stocks]
+    output = [get_stock_timeline(stock, apikey) for stock in stocks]
     return pd.concat(output)
 
 
@@ -85,7 +75,7 @@ def get_performance(df: pd.DataFrame):
     return df
 
 
-def get_historical_prices(stock: str, apikey: str):
+def get_historical_data(stock: str, apikey: str):
     API_URL = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock}&outputsize=full&datatype=csv&apikey={apikey}"
     response = requests.get(API_URL)
     if 'Invalid API call' in response.text:
@@ -98,4 +88,4 @@ def get_historical_prices(stock: str, apikey: str):
     output['ticker'] = stock
     output['timestamp'] = output['timestamp'].str.replace('-', '/')
     output['close'] = output['close'].astype(float) * 100
-    return output[90:]
+    return output[100:]

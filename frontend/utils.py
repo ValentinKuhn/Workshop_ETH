@@ -1,82 +1,44 @@
 from typing import List
 import pandas as pd
-from pytickersymbols import PyTickerSymbols
 import os
-from hints import get_stock_API, get_historical_prices
+import requests
+import time
 
-
-# Task 1
-def transform_api_output(api_result: str):
-    output = pd.DataFrame()
-    # TODO: Transform result to pandas Dataframe
-
-    return output
-
-def get_stock_prices(stock: str, apikey: str):
-    api_result = get_stock_API(stock, apikey)
-    output = transform_api_output(api_result)
-    output['ticker'] = stock
-    output['close'] = output['close'].astype(float)
-    return output
-
-# Task 2
-def get_or_load(stock: str, apikey: str, historical: bool = False):
+def get_historical_data(stock: str, apikey: str):
     # Define folder, filename and file path
-    if historical:
-        data_dir = 'data/hist/'
-    else:
-        data_dir = 'data/current/'
-    
     file_name = f'{stock}.csv'
+    data_dir = 'data/hist/'
     file_path = f'{data_dir}{file_name}'
     
     # Check if stock already in data lake
     if file_name in os.listdir(data_dir):
-        data_stock = pd.read_csv(file_path)
-        return data_stock
+        data = pd.read_csv(file_path, index_col=0)
+        return data
     
     # If stock not found locally, return API call
-    if historical:
-        data = get_historical_prices(stock, apikey)
-    else:
-        data = get_stock_prices(stock, apikey)
+    data = get_historical_data_API(stock, apikey)
     if 'timestamp' in data.columns:
         data.to_csv(file_path)
-    return data
-
-# Task 3
-def transform_hist_data(df: pd.DataFrame):
-    output = df
-
-    return output
-
-def historical(stock: str, apikey: str):
-    output = pd.DataFrame()
-    current_data = get_or_load(stock, apikey)
-    
-    hist_data_raw = get_or_load(stock, apikey, historical=True)
-    hist_data = transform_hist_data(hist_data_raw)
-    
-    output = pd.concat([current_data,hist_data])
-    return output
-
-# Task 4
-def get_stocks(stocks: List[str], apikey: str):
-    output = pd.DataFrame()
-    # TODO: Expand the output to multiple stocks, use buffering function
-
-    return pd.concat(output)
+        data['close'] = data['close'].astype(float)
+        return data
+    else:
+        raise KeyError('Column timestamp not in dataframe!')
 
 
-def get_ticker_symbols():
-    stocks = ['AAPL', "IBM"]
-    # TODO: Insert dataframe Transformation her
-
-    return stocks
-
-# Task 3
-def get_performance(df: pd.DataFrame):
-    return df
+def get_historical_data_API(stock: str, apikey: str):
+    API_URL = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock}&outputsize=full&datatype=csv&apikey={apikey}"
+    response = requests.get(API_URL)
+    if 'Invalid API call' in response.text:
+        raise KeyError("Ticker not valid!")
+    while '5 calls per minute' in response.text:
+        time.sleep(60)
+        response = requests.get(API_URL)
+    text = [sub.split(",") for sub in response.text.split("\r\n")]
+    output = pd.DataFrame(text[1:], columns=text[0]).dropna()
+    output['ticker'] = stock
+    output['timestamp'] = output['timestamp'].str.replace('-', '/')
+    output['close'] = output['close'].astype(float) * 100
+    return output[100:]
 
 
 

@@ -46,4 +46,9 @@
 ## Working file
  frontend/utils.py
 
-## 
+## Run
+`pip install -r requirements.txt`
+
+## TODOs
+### Setup jupytr docker
+### Setup jupytr docker
