@@ -1,18 +1,12 @@
 version: "2"
 
-secrets:
-  API_KEY:
-    external: true
-
 services:
   frontend:
     build: ./frontend
     ports:
      - "8505:8501"
-    environment:
-      - 'API_KEY=/run/secrets/API_KEY'
-    secrets:
-      - API_KEY
+    env_file:
+     - .env
     volumes:
       - "./frontend:/app:rw"
     restart: always
@@ -20,9 +14,7 @@ services:
     image: jupyter/minimal-notebook
     ports:
      - "8888:8888"
-    environment:
-      - 'API_KEY=/run/secrets/API_KEY'
-    secrets:
-      - API_KEY
+    env_file:
+      - .env
     volumes:
       - "./frontend:/home/jovyan/work:rw"

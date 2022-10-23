@@ -30,9 +30,7 @@
 
    Console:  `docker-compose build`
 
-3) Add API-Key to dashboard
-
-    Console: `docker-compose add secret`
+3) Manually copy your API-Key to file `.env`
 
 4) Start dashboard
 
@@ -47,6 +45,7 @@
  frontend/utils.py
 
 ## Run
+`echo "YOUR_KEY" > .APIKEY`
 `pip install -r requirements.txt`
 
 ## TODOs
