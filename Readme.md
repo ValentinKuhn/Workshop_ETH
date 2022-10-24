@@ -26,28 +26,23 @@
 1) Get Repository
 
     Console: `git clone URL`
+    
 2) Build run time environment
 
    Console:  `docker-compose build`
 
 3) Manually copy your API-Key to file `.env`
 
-4) Start dashboard
+4) Start services
 
     Console: `docker-compose up`
 
-5) Check dashboard
-
-    Browser: `localhost:8505`
 
 # Overall structure
-## Working file
- frontend/utils.py
+## Working service 
 
-## Run
-`echo "YOUR_KEY" > .APIKEY`
-`pip install -r requirements.txt`
+[Jupyter Labs](http://127.0.0.1:8888)
 
-## TODOs
-### Setup jupytr docker
-### Setup jupytr docker
+## Dashboard
+
+Check [Dashboard](http://127.0.0.1:8505)
